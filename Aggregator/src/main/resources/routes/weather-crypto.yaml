@@ -1,0 +1,63 @@
+# src/main/resources/routes/weather-crypto.yaml
+- from:
+    uri: direct:weather-crypto
+    steps:
+      - multicast:
+          parallelProcessing: true
+          aggregationStrategy: "#class:com.eis1dev.aggregator.camel.ResultKeyMapAggregationStrategy"
+          steps:
+            # 1) Open-Meteo
+            - step:
+                steps:
+                  - setHeader:
+                      name: Accept
+                      constant: application/json
+                  - toD: "https://api.open-meteo.com/v1/forecast?latitude=${header.lat}&longitude=${header.lon}&hourly=temperature_2m"
+                  - setBody:
+                      jsonpath: "$.hourly.temperature_2m[0]"
+                  - setHeader:
+                      name: resultKey
+                      constant: temperature
+
+            # 2) Coindesk
+            - step:
+                steps:
+                  - toD: "https://api.coindesk.com/v1/bpi/currentprice/${header.coin}.json"
+                  - setBody:
+                      jsonpath: "$.bpi.${header.coin}.rate_float"
+                  - setHeader:
+                      name: resultKey
+                      constant: bitcoinPrice
+
+            # 3) Cat Facts
+            - step:
+                steps:
+                  - to: "https://catfact.ninja/fact"
+                  - setBody:
+                      jsonpath: "$.fact"
+                  - setHeader:
+                      name: resultKey
+                      constant: fact
+
+            # 4) Chuck Norris
+            - step:
+                steps:
+                  - to: "https://api.chucknorris.io/jokes/random"
+                  - setBody:
+                      jsonpath: "$.value"
+                  - setHeader:
+                      name: resultKey
+                      constant: joke
+
+            # 5) Advice Slip
+            - step:
+                steps:
+                  - to: "https://api.adviceslip.com/advice"
+                  - setBody:
+                      jsonpath: "$.slip.advice"
+                  - setHeader:
+                      name: resultKey
+                      constant: advice
+
+      - marshal:
+          json: {}
