@@ -1,0 +1,2 @@
+# AggregatorPattern
+Aggregator Pattern implementation
